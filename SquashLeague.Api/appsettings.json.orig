@@ -1,0 +1,16 @@
+{
+<<<<<<< HEAD
+=======
+  "ConnectionStrings": {
+    "AppDbConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SquashLeagueDb;Trusted_Connection=True;"
+  },
+>>>>>>> dev
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*"
+}
