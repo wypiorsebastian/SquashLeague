@@ -6,6 +6,11 @@ using SquashLeague.Domain.Entities;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SquashLeague.Infrastructure.Services
 {
@@ -14,17 +19,20 @@ namespace SquashLeague.Infrastructure.Services
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
 
         public AuthService(UserManager<AppUser> userManager, 
             RoleManager<IdentityRole> roleManager, 
             SignInManager<AppUser> signInManager,
+            IConfiguration configuration,
             IEmailService emailService)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         public async Task<UserDTO> RegisterUser(SignupModel signupModel)
@@ -57,9 +65,11 @@ namespace SquashLeague.Infrastructure.Services
             var user = await _userManager.FindByNameAsync(signupModel.UserName);
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            var confirmationLink = $"{signupModel.ConfirmationLink}\\{new { userId = user.Id, @token = token }}";
+            var confirmationData = new { userName = user.Id, registrationToken = token };
 
-            //_emailService.SendEmail(user.Email, )
+            var confirmationLink = $"{signupModel.ConfirmationLink}?userName={user.UserName}&token={token}";
+
+            await _emailService.SendEmail(user.Email, confirmationLink);
 
 
             return new UserDTO();
@@ -76,6 +86,38 @@ namespace SquashLeague.Infrastructure.Services
             }
 
             return false;
+        }
+
+        public async Task<string> Signin(SigninModel signinModel)
+        {
+            var issuer = _configuration["Tokens:Issuer"];
+            var audience = _configuration["Tokens:Audience"];
+            var key = _configuration["Tokens:Key"];
+            string result = string.Empty;
+
+            var signinResult =
+                    await _signInManager.PasswordSignInAsync(signinModel.UserName, signinModel.Password, false, false);
+            if (signinResult.Succeeded)
+            {
+                var user = await _userManager.FindByNameAsync(signinModel.UserName);
+                if (user != null)
+                {
+                    var claims = new[]
+                    {
+                            new Claim(JwtRegisteredClaimNames.Email , user.Email),
+                            new Claim(JwtRegisteredClaimNames.Jti , user.Id),
+                    };
+
+                    var keyBytes = Encoding.UTF8.GetBytes(key);
+                    var theKey = new SymmetricSecurityKey(keyBytes);
+                    var creds = new SigningCredentials(theKey, SecurityAlgorithms.HmacSha256);
+                    var token = new JwtSecurityToken(issuer, audience, claims, expires: DateTime.Now.AddMinutes(30), signingCredentials: creds);
+
+                    return new JwtSecurityTokenHandler().WriteToken(token);
+                }
+            }
+
+            return result;
         }
     }
 }

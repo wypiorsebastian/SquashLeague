@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SquashLeague.Application.Contracts;
 using SquashLeague.Application.DTO;
 using SquashLeague.Application.Models;
@@ -30,11 +31,19 @@ namespace SquashLeague.Api.Controllers
             return new UserDTO();
         }
 
+        [HttpPost("Signin")]
+        [ProducesResponseType(typeof(UserDTO), Status200OK)]
+        public async Task<ActionResult> SignIn(SigninModel signinModel)
+        {
+            string tokenResult = await _authService.Signin(signinModel);
+            return Ok(new { token = tokenResult});
+        }
+
         [HttpGet("ConfirmEmail")]
         [ApiExplorerSettings(IgnoreApi = true)]
-        public async Task<bool> ConfirmEmail(string userId, string token)
+        public async Task<bool> ConfirmEmail(string userName, string token)
         {
-            return await _authService.ConfirmRegistration(userId, token);
+            return await _authService.ConfirmRegistration(userName, token);
         }
 
     }

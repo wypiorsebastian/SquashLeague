@@ -10,6 +10,7 @@ namespace SquashLeague.Application.Contracts
     public interface IAuthService
     {
         Task<UserDTO> RegisterUser(SignupModel signupModel);
+        Task<string> Signin(SigninModel signinModel);
         Task<bool> ConfirmRegistration(string userName, string registrationToken);
     }
 }
