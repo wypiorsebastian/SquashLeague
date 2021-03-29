@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using SquashLeague.Application;
 using SquashLeague.Infrastructure;
 using SquashLeague.Persistence;
+using System.Text;
 
 namespace SquashLeague.Api
 {
@@ -40,6 +42,28 @@ namespace SquashLeague.Api
             services.AddPersistenceServices(Configuration);
             services.AddInfrastructureServices();
             services.AddApplicationServices();
+
+            var issuer = Configuration["Tokens:Issuer"];
+            var audience = Configuration["Tokens:Audience"];
+            var key = Configuration["Tokens:Key"];
+
+            services.AddAuthentication().AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidIssuer = issuer,
+                    ValidAudience = audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+                };
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("IsAdmin", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("IsPlayer", policy => policy.RequireRole("Player"));
+            });
             
         }
 

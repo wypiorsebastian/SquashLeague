@@ -106,6 +106,7 @@ namespace SquashLeague.Infrastructure.Services
                     {
                             new Claim(JwtRegisteredClaimNames.Email , user.Email),
                             new Claim(JwtRegisteredClaimNames.Jti , user.Id),
+                            new Claim("xxx", "yyy")
                     };
 
                     var keyBytes = Encoding.UTF8.GetBytes(key);
