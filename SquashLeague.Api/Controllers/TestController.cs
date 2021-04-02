@@ -11,7 +11,7 @@ namespace SquashLeague.Api.Controllers
     {
         [HttpGet("testaction")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        //[Authorize(Policy = "IsAdmin")]
+        [Authorize(Policy = "IsAdmin")]
         public ActionResult TestAction()
         {
             var xxx = HttpContext.GetUserId();

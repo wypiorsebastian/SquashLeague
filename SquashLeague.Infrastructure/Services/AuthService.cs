@@ -11,6 +11,8 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SquashLeague.Infrastructure.Services
 {
@@ -102,16 +104,22 @@ namespace SquashLeague.Infrastructure.Services
                 var user = await _userManager.FindByNameAsync(signinModel.UserName);
                 if (user != null)
                 {
-                    var claims = new[]
+                    var userClaims = await _userManager.GetRolesAsync(user);
+                    //var userRoles = from role in userClaims select new Claim(ClaimTypes.Role, role);
+                    var userRoles = userClaims.Select(x => new Claim(ClaimTypes.Role, x));
+
+                    var claims = new List<Claim>()
                     {
-                            new Claim(JwtRegisteredClaimNames.Email , user.Email),
+                        new Claim(JwtRegisteredClaimNames.Email , user.Email),
                             new Claim(JwtRegisteredClaimNames.Jti , user.Id),
                             new Claim("xxx", "yyy")
                     };
 
+                    claims.AddRange(userRoles);
+                    
                     var keyBytes = Encoding.UTF8.GetBytes(key);
                     var theKey = new SymmetricSecurityKey(keyBytes);
-                    var creds = new SigningCredentials(theKey, SecurityAlgorithms.HmacSha256);
+                    var creds = new SigningCredentials(theKey, SecurityAlgorithms.HmacSha256Signature);
                     var token = new JwtSecurityToken(issuer, audience, claims, expires: DateTime.Now.AddMinutes(30), signingCredentials: creds);
 
                     return new JwtSecurityTokenHandler().WriteToken(token);
