@@ -10,6 +10,8 @@ namespace SquashLeague.Persistence
     public class AppDbContext : IdentityDbContext<AppUser>
     {
         public DbSet<Season> Seasons { get; set; }
+        public DbSet<Article> Articles { get; set; }
+        public DbSet<Image> Images { get; set; }
         public AppDbContext(DbContextOptions options)
             : base(options)
         {

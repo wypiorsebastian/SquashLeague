@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SquashLeague.Domain.Entities
 {
-    public class Season : AuditableEntity
+    public class Season : Entity
     {
         public int Id { get; set; }
         public string Name { get; set; }
