@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SquashLeague.Application\SquashLeague.Application.csproj" />
+    <ProjectReference Include="..\SquashLeague.Persistence\SquashLeague.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

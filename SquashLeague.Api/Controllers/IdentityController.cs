@@ -13,9 +13,7 @@ namespace SquashLeague.Api.Controllers
     [Route("api/[controller]")]
     public class IdentityController : BaseApiController
     {
-        private readonly IAuthService _authService;
-
-        
+        private readonly IAuthService _authService;        
         public IdentityController(IAuthService authService)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
@@ -35,8 +33,29 @@ namespace SquashLeague.Api.Controllers
         [ProducesResponseType(typeof(UserDTO), Status200OK)]
         public async Task<ActionResult> SignIn(SigninModel signinModel)
         {
-            string tokenResult = await _authService.Signin(signinModel);
-            return Ok(new { token = tokenResult});
+            var signinResult = await _authService.Signin(signinModel);
+
+            return Ok(new SuccessSignInResponse
+            {
+                Token = signinResult.Token,
+                RefreshToken = signinResult.RefreshToken
+            });
+        }
+        
+        [HttpPost("RefreshToken")]
+        [ProducesResponseType(typeof(UserDTO), Status200OK)]
+        public async Task<ActionResult> RefreshToken(RefreshTokenRequest refreshTokenRequest)
+        {
+            string tokenResult = string.Empty;
+            //var tokenRefreshResult = await _authService.RefreshTokenAsync(refreshTokenRequest);
+            var tokenRefreshResult = await _authService.VerifyAndGenerateTokenAsync(refreshTokenRequest);
+            //return Ok(new { token = tokenResult});
+            return Ok(new SuccessSignInResponse
+            {
+                Token = tokenRefreshResult.Token,
+                RefreshToken = tokenRefreshResult.RefreshToken
+
+            });
         }
 
         [HttpGet("ConfirmEmail")]

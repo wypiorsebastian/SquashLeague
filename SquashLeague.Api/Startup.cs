@@ -9,6 +9,7 @@ using SquashLeague.Application;
 using SquashLeague.Infrastructure;
 using SquashLeague.Persistence;
 using System.Text;
+using SquashLeague.Infrastructure.Settings;
 
 namespace SquashLeague.Api
 {
@@ -20,8 +21,6 @@ namespace SquashLeague.Api
         }
 
         public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSwaggerGen(setupAction =>
@@ -34,7 +33,7 @@ namespace SquashLeague.Api
                         Contact = new Microsoft.OpenApi.Models.OpenApiContact
                         {
                             Email = "wypior.sebastian@gmail.com",
-                            Name = "Sebasian Wypiór"
+                            Name = "Sebasian WypiÃ³r"
                         }
                     });
             });
@@ -43,10 +42,25 @@ namespace SquashLeague.Api
             services.AddPersistenceServices(Configuration);
             services.AddInfrastructureServices();
             services.AddApplicationServices();
+            services.Configure<JwtSettings>(options =>
+                Configuration.GetSection("JwtSettings").Bind(options));
 
-            var issuer = Configuration["Tokens:Issuer"];
-            var audience = Configuration["Tokens:Audience"];
-            var key = Configuration["Tokens:Key"];
+            var issuer = Configuration["JwtSettings:Issuer"];
+            var audience = Configuration["JwtSettings:Audience"];
+            var key = Configuration["JwtSettings:Key"];
+            
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                //ValidIssuer = issuer,
+                //ValidAudience = audience,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                RequireExpirationTime = false,
+                ValidateLifetime = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+            };
+
+            services.AddSingleton(tokenValidationParameters);
 
             services.AddAuthentication(x => 
             {
@@ -58,16 +72,7 @@ namespace SquashLeague.Api
             {
                 options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    //ValidIssuer = issuer,
-                    //ValidAudience = audience,
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    RequireExpirationTime = false,
-                    ValidateLifetime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
-                };
+                options.TokenValidationParameters = tokenValidationParameters;
             });
 
             services.AddAuthorization(options =>
@@ -94,8 +99,6 @@ namespace SquashLeague.Api
             });
 
             app.UseHttpsRedirection();
-
-            
 
             app.UseRouting();
 

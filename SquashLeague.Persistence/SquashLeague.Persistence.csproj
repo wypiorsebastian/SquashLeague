@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SquashLeague.Application\SquashLeague.Application.csproj" />
     <ProjectReference Include="..\SquashLeague.Domain\SquashLeague.Domain.csproj" />
   </ItemGroup>
 
